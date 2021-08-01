@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask whereCanLand;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Vector3 boxSize = new Vector3(.75f, .2f, .8f);
+    public CinemachineVirtualCamera virtualCamera;
 
     private bool landed;
     private bool preValOfAllTouch;
@@ -40,6 +42,25 @@ public class PlayerMovement : MonoBehaviour
         if (rb.velocity.y < 0) yVelBeforeLanded = rb.velocity.y;
         if (landed && yVelBeforeLanded < -deadForce) die();
         if (landed) refillFuel();
+
+
+        //Control camera
+        //https://stackoverflow.com/questions/59346229/change-camera-distance-of-cinemachine-in-script
+        //
+        CinemachineComponentBase componentBase = virtualCamera.GetCinemachineComponent(CinemachineCore.Stage.Body);
+        if (componentBase is CinemachineFramingTransposer)
+        {
+            if (landed)
+            {
+                (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = 0;
+                (componentBase as CinemachineFramingTransposer).m_XDamping = 3;
+            }
+            else
+            {
+                (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = .7f;
+                (componentBase as CinemachineFramingTransposer).m_XDamping = 5;
+            }
+        }
     }
 
     void FixedUpdate()
@@ -47,12 +68,6 @@ public class PlayerMovement : MonoBehaviour
         Collider[] collider = Physics.OverlapBox(groundCheck.position, boxSize, Quaternion.identity, whereCanLand);
         if (collider.Length > 0) landed = true;
         else landed = false;
-
-        if (landed)
-        {
-            Vector3 end = new Vector3(gameObject.transform.position.x + 17, Camera.main.transform.position.y, Camera.main.transform.position.z);
-            Camera.main.transform.position = Vector3.MoveTowards(Camera.main.transform.position, end, 50 * Time.deltaTime);
-        }
     }
 
     public void move(bool touchLeft, bool touchRight)
