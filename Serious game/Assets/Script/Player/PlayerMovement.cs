@@ -18,22 +18,34 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Vector3 boxSize = new Vector3(.75f, .2f, .8f);
     public CinemachineVirtualCamera virtualCamera;
+    public GameObject playerModel;
+    private Animator animator;
 
     private bool landed;
+    private bool preValOfLanded;
     private bool preValOfAllTouch;
 
     private float yVelBeforeLanded;
     private float remainingFuel;
     private Coroutine consumFuelCoroutine;
     private WaitForSeconds WaitForSeconds;
+    private WaitForSeconds WaitForIdling;
+    private Coroutine idlingCoroutine;
 
     private Rigidbody rb;
+
+    int landedHash = Animator.StringToHash("landed");
+    int preLandedHash = Animator.StringToHash("preValOfLanded");
+    int yVelHash = Animator.StringToHash("yVel");
+    int idlingHash = Animator.StringToHash("idling");
 
     // Start is called before the first frame update
     void Start()
     {
+        animator = playerModel.GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         WaitForSeconds = new WaitForSeconds(consumeRate);
+        WaitForIdling = new WaitForSeconds(6);
         remainingFuel = maxFuel;
     }
 
@@ -61,10 +73,17 @@ public class PlayerMovement : MonoBehaviour
                 (componentBase as CinemachineFramingTransposer).m_XDamping = 5;
             }
         }
+
+        animator.SetFloat(yVelHash, rb.velocity.y);
+        animator.SetBool(landedHash, landed);
+        animator.SetBool(preLandedHash, preValOfLanded);
+        if (idlingCoroutine == null & landed) idlingCoroutine = StartCoroutine(startIdling());
+        if (!landed) animator.SetBool(idlingHash, false);
     }
 
     void FixedUpdate()
     {
+        preValOfLanded = landed;
         Collider[] collider = Physics.OverlapBox(groundCheck.position, boxSize, Quaternion.identity, whereCanLand);
         if (collider.Length > 0) landed = true;
         else landed = false;
@@ -78,7 +97,7 @@ public class PlayerMovement : MonoBehaviour
             if (touchLeft || touchRight) rb.velocity = new Vector3(100f, launchForce, 0) * Time.deltaTime;
         }
 
-        //Control
+        //Touch control
         if(!landed && remainingFuel > 0)
         {
             Vector3 force = new Vector3(horizontalForce, 0, 0);
@@ -122,6 +141,15 @@ public class PlayerMovement : MonoBehaviour
         if (remainingFuel > 0) remainingFuel -= p_consumeAmount;
         yield return WaitForSeconds;
         consumFuelCoroutine = null;
+    }
+
+    IEnumerator startIdling()
+    {
+        yield return WaitForIdling;
+        animator.SetBool(idlingHash, true);
+        yield return WaitForIdling;
+        idlingCoroutine = null;
+        animator.SetBool(idlingHash, false);
     }
 
     public bool isLanded() => landed;
