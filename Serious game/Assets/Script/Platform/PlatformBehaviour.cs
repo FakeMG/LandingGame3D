@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CenterPlayer : MonoBehaviour
+public class PlatformBehaviour : MonoBehaviour
 {
     [SerializeField] private float moveSpeed;
     [SerializeField] public int id;
@@ -18,6 +18,7 @@ public class CenterPlayer : MonoBehaviour
 
     void OnCollisionStay(Collision collision)
     {
+        // Center player
         if (collision.transform.CompareTag("Player"))
         {
             if (collision.transform.GetComponent<PlayerMovement>().isLanded())

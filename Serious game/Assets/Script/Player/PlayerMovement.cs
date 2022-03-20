@@ -17,9 +17,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask whereCanLand;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Vector3 boxSize = new Vector3(.75f, .2f, .8f);
-    public CinemachineVirtualCamera virtualCamera;
-    public GameObject playerModel;
-    private Animator animator;
+    public Animator animator;
 
     private bool landed;
     private bool preValOfLanded;
@@ -39,14 +37,17 @@ public class PlayerMovement : MonoBehaviour
     int yVelHash = Animator.StringToHash("yVel");
     int idlingHash = Animator.StringToHash("idling");
 
+    Quaternion target;
+
     // Start is called before the first frame update
     void Start()
     {
-        animator = playerModel.GetComponent<Animator>();
+        //animator = playerModel.GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         WaitForSeconds = new WaitForSeconds(consumeRate);
         WaitForIdling = new WaitForSeconds(6);
         remainingFuel = maxFuel;
+        target = rb.rotation * Quaternion.Euler(new Vector3(0, 0, 20));
     }
 
     void Update()
@@ -54,25 +55,6 @@ public class PlayerMovement : MonoBehaviour
         if (rb.velocity.y < 0) yVelBeforeLanded = rb.velocity.y;
         if (landed && yVelBeforeLanded < -deadForce) die();
         if (landed) refillFuel();
-
-
-        //Control camera
-        //https://stackoverflow.com/questions/59346229/change-camera-distance-of-cinemachine-in-script
-        //
-        CinemachineComponentBase componentBase = virtualCamera.GetCinemachineComponent(CinemachineCore.Stage.Body);
-        if (componentBase is CinemachineFramingTransposer)
-        {
-            if (landed)
-            {
-                (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = 0;
-                (componentBase as CinemachineFramingTransposer).m_XDamping = 3;
-            }
-            else
-            {
-                (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = .7f;
-                (componentBase as CinemachineFramingTransposer).m_XDamping = 5;
-            }
-        }
 
         animator.SetFloat(yVelHash, rb.velocity.y);
         animator.SetBool(landedHash, landed);
@@ -83,10 +65,13 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Ground check
         preValOfLanded = landed;
         Collider[] collider = Physics.OverlapBox(groundCheck.position, boxSize, Quaternion.identity, whereCanLand);
         if (collider.Length > 0) landed = true;
         else landed = false;
+
+        //rb.rotation = Quaternion.RotateTowards(rb.rotation, target, 5*Time.deltaTime);
     }
 
     public void move(bool touchLeft, bool touchRight)
@@ -123,7 +108,7 @@ public class PlayerMovement : MonoBehaviour
 
     void die()
     {
-        Destroy(gameObject);
+        gameObject.SetActive(false);
     }
 
     void refillFuel()

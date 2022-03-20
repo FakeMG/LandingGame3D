@@ -9,12 +9,14 @@ public class PlayerScore : MonoBehaviour
 
     private static int prePlatformID;
     private int skipOverMultiply = 2;
+    private GameObject currentPlatform;
 
 
     private void OnCollisionEnter(Collision collision)
     {
-        CenterPlayer temp = collision.transform.GetComponent<CenterPlayer>();
-        if (temp && gameObject)
+        currentPlatform = collision.gameObject;
+        PlatformBehaviour temp = collision.transform.GetComponent<PlatformBehaviour>();
+        if (temp && gameObject.activeInHierarchy)
         {
             if(temp.id - prePlatformID == 1)
             {
@@ -31,5 +33,10 @@ public class PlayerScore : MonoBehaviour
 
             textScore.text = score.ToString();
         }
+    }
+
+    public GameObject getCurrentPlatform()
+    {
+        return currentPlatform;
     }
 }
