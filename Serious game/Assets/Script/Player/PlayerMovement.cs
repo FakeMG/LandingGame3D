@@ -58,7 +58,11 @@ public class PlayerMovement : MonoBehaviour
 
         animator.SetFloat(yVelHash, rb.velocity.y);
         animator.SetBool(landedHash, landed);
+
+        // Khi landed s? có 2 animation (idling, landing) nên ko th? dùng Trigger ?? ch?y landing animation
+        // C?n có preValOfLanded ?? landing animation ch? ch?y 1 l?n khi m?i ti?p ??t
         animator.SetBool(preLandedHash, preValOfLanded);
+
         if (idlingCoroutine == null & landed) idlingCoroutine = StartCoroutine(startIdling());
         if (!landed) animator.SetBool(idlingHash, false);
     }
@@ -68,8 +72,14 @@ public class PlayerMovement : MonoBehaviour
         // Ground check
         preValOfLanded = landed;
         Collider[] collider = Physics.OverlapBox(groundCheck.position, boxSize, Quaternion.identity, whereCanLand);
-        if (collider.Length > 0) landed = true;
-        else landed = false;
+        if (collider.Length > 0)
+        {
+            landed = true;
+        }
+        else
+        {
+            landed = false;
+        }
 
         //rb.rotation = Quaternion.RotateTowards(rb.rotation, target, 5*Time.deltaTime);
     }
@@ -89,7 +99,11 @@ public class PlayerMovement : MonoBehaviour
             if (touchLeft && !touchRight) rb.AddForce(-force * Time.deltaTime, ForceMode.VelocityChange);
             if (!touchLeft && touchRight) rb.AddForce(force * Time.deltaTime, ForceMode.VelocityChange);
 
-            if(touchLeft || touchRight) rb.AddForce(Vector3.up * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
+            if ((touchLeft && !touchRight) || (!touchLeft && touchRight))
+            {
+                rb.AddForce(Vector3.up * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
+            }
+
             if (touchLeft && touchRight) rb.AddForce(Vector3.up * 1.5f * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
         }
 
@@ -130,8 +144,11 @@ public class PlayerMovement : MonoBehaviour
 
     IEnumerator startIdling()
     {
+        // Khi landed, sau 1 kho?ng th?i gian idling animation s? ch?y
         yield return WaitForIdling;
         animator.SetBool(idlingHash, true);
+        // Vì animation ko looping
+        // Nên sau khi ch?y ?c 1 kho?ng th?i gian, s? t?t animation ?i ?? có th? ch?y l?i
         yield return WaitForIdling;
         idlingCoroutine = null;
         animator.SetBool(idlingHash, false);

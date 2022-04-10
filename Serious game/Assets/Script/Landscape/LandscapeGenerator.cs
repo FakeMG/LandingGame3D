@@ -8,7 +8,7 @@ public class LandscapeGenerator : MonoBehaviour
     [SerializeField] private Transform playerPos;
     [Space]
     [SerializeField] private int numOfPreLoadLandscape = 4;
-    [SerializeField] private float preLoadDis = 10;
+    [SerializeField] private float preLoadDis = 100;
 
     public List<Transform> landscapeList = new List<Transform>();
     private Transform lastEndPos;
@@ -20,10 +20,10 @@ public class LandscapeGenerator : MonoBehaviour
         // "End Position" là 1 gameobject g?n ? cu?i m?i landscape
         lastEndPos = landscapePrefab.Find("End Position");
 
-        // add landscape ???c ??t s?n ??u tiên vào list
+        // add landscape ??u tiên vào list (landscape player ??ng lúc m?i b?t ??u game)
         landscapeList.Add(landscapePrefab);
 
-        // spawn s?n platform
+        // spawn s?n landscape
         for (int i = 0; i < numOfPreLoadLandscape; i++)
         {
             spawnNewLandscape();
@@ -33,7 +33,7 @@ public class LandscapeGenerator : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // N?u to? ?? x ng??i ch?i t?i lastEndPos nh? h?n 1 giá tr? cho tr??c thì t?o thêm landscape
+        // N?u to? ?? x c?a ng??i ch?i t?i lastEndPos nh? h?n 1 giá tr? cho tr??c thì t?o thêm landscape
         if (playerPos != null)
         {
             if (Mathf.Abs(lastEndPos.position.x - playerPos.position.x) < preLoadDis)

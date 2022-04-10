@@ -9,11 +9,18 @@ public class PlatformBehaviour : MonoBehaviour
 
     private static int platformIDGenerator;
     private Rigidbody playerRB;
+    private Animator animator;
 
     void Start()
     {
+        animator = GetComponent<Animator>();
         id = platformIDGenerator;
         platformIDGenerator++;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        animator.SetTrigger("Squash");
     }
 
     void OnCollisionStay(Collision collision)
