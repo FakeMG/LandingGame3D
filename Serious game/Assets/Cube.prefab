@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1271831224570099873}
   - component: {fileID: 1271831224570099806}
   - component: {fileID: 279660301673897017}
-  - component: {fileID: 1091113765148927241}
+  - component: {fileID: 4081082823913448101}
   m_Layer: 3
   m_Name: Cube
   m_TagString: Untagged
@@ -112,7 +112,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 10
   id: 0
---- !u!95 &1091113765148927241
+--- !u!95 &4081082823913448101
 Animator:
   serializedVersion: 3
   m_ObjectHideFlags: 0
@@ -125,7 +125,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 2666b93cb3e223743a18ac91f3fdc45a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1

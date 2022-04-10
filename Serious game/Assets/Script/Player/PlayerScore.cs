@@ -2,8 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerScore : MonoBehaviour
-{
+public class PlayerScore : MonoBehaviour {
     public Text textScore;
     [SerializeField] private int score;
 
@@ -12,20 +11,16 @@ public class PlayerScore : MonoBehaviour
     private GameObject currentPlatform;
 
 
-    private void OnCollisionEnter(Collision collision)
-    {
+    private void OnCollisionEnter(Collision collision) {
         currentPlatform = collision.gameObject;
         PlatformBehaviour temp = collision.transform.GetComponent<PlatformBehaviour>();
-        if (temp && gameObject.activeInHierarchy)
-        {
-            if(temp.id - prePlatformID == 1)
-            {
+        if (temp && gameObject.activeInHierarchy) {
+            if (temp.id - prePlatformID == 1) {
                 prePlatformID = temp.id;
                 score++;
                 skipOverMultiply = 2;
             }
-            if(temp.id - prePlatformID > 1)
-            {
+            if (temp.id - prePlatformID > 1) {
                 score += (temp.id - prePlatformID) * skipOverMultiply;
                 prePlatformID = temp.id;
                 skipOverMultiply += 2;
@@ -35,8 +30,7 @@ public class PlayerScore : MonoBehaviour
         }
     }
 
-    public GameObject getCurrentPlatform()
-    {
+    public GameObject getCurrentPlatform() {
         return currentPlatform;
     }
 }

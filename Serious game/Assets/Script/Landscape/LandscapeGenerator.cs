@@ -1,9 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LandscapeGenerator : MonoBehaviour
-{
+public class LandscapeGenerator : MonoBehaviour {
     [SerializeField] private Transform landscapePrefab;
     [SerializeField] private Transform playerPos;
     [Space]
@@ -14,8 +12,7 @@ public class LandscapeGenerator : MonoBehaviour
     private Transform lastEndPos;
 
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
         // to? ?? c?n ??t landscape ti?p theo
         // "End Position" là 1 gameobject g?n ? cu?i m?i landscape
         lastEndPos = landscapePrefab.Find("End Position");
@@ -24,31 +21,25 @@ public class LandscapeGenerator : MonoBehaviour
         landscapeList.Add(landscapePrefab);
 
         // spawn s?n landscape
-        for (int i = 0; i < numOfPreLoadLandscape; i++)
-        {
+        for (int i = 0; i < numOfPreLoadLandscape; i++) {
             spawnNewLandscape();
         }
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update() {
         // N?u to? ?? x c?a ng??i ch?i t?i lastEndPos nh? h?n 1 giá tr? cho tr??c thì t?o thêm landscape
-        if (playerPos != null)
-        {
-            if (Mathf.Abs(lastEndPos.position.x - playerPos.position.x) < preLoadDis)
-            {
-                for (int i = 0; i < numOfPreLoadLandscape; i++)
-                {
+        if (playerPos != null) {
+            if (Mathf.Abs(lastEndPos.position.x - playerPos.position.x) < preLoadDis) {
+                for (int i = 0; i < numOfPreLoadLandscape; i++) {
                     spawnNewLandscape();
                 }
             }
         }
     }
 
-    void spawnNewLandscape()
-    {
-        Vector3 pos = new Vector3(lastEndPos.position.x, -7, 14.3f);
+    void spawnNewLandscape() {
+        Vector3 pos = new Vector3(lastEndPos.position.x, landscapePrefab.position.y, landscapePrefab.position.z);
         Transform newLandspace = Instantiate(landscapePrefab, pos, Quaternion.identity, gameObject.transform);
         landscapeList.Add(newLandspace);
         lastEndPos = newLandspace.Find("End Position");
