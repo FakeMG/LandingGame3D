@@ -1,17 +1,17 @@
-using Cinemachine;
+﻿using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour {
-    [SerializeField] private float horizontalForce;
-    [SerializeField] private float launchForce;
-    [SerializeField] private float pushUpForce;
-    [SerializeField] private float deadForce;
+    [SerializeField] private float horizontalForce = 12;
+    [SerializeField] private float launchForce = 550;
+    [SerializeField] private float pushUpForce = 12;
+    [SerializeField] private float deadForce = 8;
     [Space]
-    [SerializeField] private float maxFuel;
-    [SerializeField] private float consumeAmount;
-    [SerializeField] private float consumeRate;
+    [SerializeField] private float maxFuel = 18;
+    [SerializeField] private float consumeAmount = 2;
+    [SerializeField] private float consumeRate = 0.3f;
     [Space]
     [SerializeField] private LayerMask whereCanLand;
     [SerializeField] private Transform groundCheck;
@@ -26,7 +26,7 @@ public class PlayerMovement : MonoBehaviour {
     private float yVelBeforeLanded;
     private float remainingFuel;
     private Coroutine consumFuelCoroutine;
-    private WaitForSeconds WaitForSeconds;
+    private WaitForSeconds WaitForConsumeFuel;
     private WaitForSeconds WaitForIdling;
     private Coroutine idlingCoroutine;
 
@@ -43,61 +43,49 @@ public class PlayerMovement : MonoBehaviour {
     void Start() {
         //animator = playerModel.GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
-        WaitForSeconds = new WaitForSeconds(consumeRate);
+        WaitForConsumeFuel = new WaitForSeconds(consumeRate);
         WaitForIdling = new WaitForSeconds(6);
         remainingFuel = maxFuel;
-        target = rb.rotation * Quaternion.Euler(new Vector3(0, 0, 20));
+        target = rb.rotation * Quaternion.Euler(new Vector3(0, 0, -40));
     }
 
     void Update() {
-        if (rb.velocity.y < 0) yVelBeforeLanded = rb.velocity.y;
-        if (landed && yVelBeforeLanded < -deadForce) die();
-        if (landed) refillFuel();
+        if (rb.velocity.y < 0) {
+            yVelBeforeLanded = rb.velocity.y;
+        }
+        if (landed && yVelBeforeLanded < -deadForce) {
+            die();
+        }
+        if (landed) {
+            refillFuel();
+        }
 
         animator.SetFloat(yVelHash, rb.velocity.y);
         animator.SetBool(landedHash, landed);
 
-        // Khi landed s? c� 2 animation (idling, landing) n�n ko th? d�ng Trigger ?? ch?y landing animation
-        // C?n c� preValOfLanded ?? landing animation ch? ch?y 1 l?n khi m?i ti?p ??t
+        // Khi landed sẽ có 2 animation (idling, landing) nên ko thể dùng Trigger để chạy landing animation
+        // Cần có preValOfLanded để landing animation chỉ chạy 1 lần khi mới tiếp đất
         animator.SetBool(preLandedHash, preValOfLanded);
 
-        if (idlingCoroutine == null & landed) idlingCoroutine = StartCoroutine(startIdling());
-        if (!landed) animator.SetBool(idlingHash, false);
+        if (idlingCoroutine == null & landed) {
+            idlingCoroutine = StartCoroutine(startIdling());
+        }
+        if (!landed) {
+            animator.SetBool(idlingHash, false);
+            StopCoroutine(startIdling());
+        }
     }
 
     void FixedUpdate() {
-        // Ground check
-        preValOfLanded = landed;
-        Collider[] collider = Physics.OverlapBox(groundCheck.position, boxSize, Quaternion.identity, whereCanLand);
-        if (collider.Length > 0) {
-            landed = true;
-        } else {
-            landed = false;
-        }
-
-        //rb.rotation = Quaternion.RotateTowards(rb.rotation, target, 5*Time.deltaTime);
+        checkGround();
     }
 
-    // D�ng trong "PlayerInput.cs"
+    // Dùng trong "PlayerInput.cs"
     public void move(bool touchLeft, bool touchRight) {
-        //Launch
-        //Ko launch khi gi? n�t t? tr??c
-        if (landed && !preValOfAllTouch) {
-            if (touchLeft || touchRight) rb.velocity = new Vector3(100f, launchForce, 0) * Time.deltaTime;
-        }
+        launchControl(touchLeft, touchRight);
 
-        //Touch control
-        if (!landed && remainingFuel > 0) {
-            Vector3 force = new Vector3(horizontalForce, 0, 0);
-            if (touchLeft && !touchRight) rb.AddForce(-force * Time.deltaTime, ForceMode.VelocityChange);
-            if (!touchLeft && touchRight) rb.AddForce(force * Time.deltaTime, ForceMode.VelocityChange);
+        movementControl(touchLeft, touchRight);
 
-            if ((touchLeft && !touchRight) || (!touchLeft && touchRight)) {
-                rb.AddForce(Vector3.up * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
-            }
-
-            if (touchLeft && touchRight) rb.AddForce(Vector3.up * 1.5f * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
-        }
 
         //Consume fuel
         if (touchLeft || touchRight) {
@@ -106,6 +94,8 @@ public class PlayerMovement : MonoBehaviour {
                 else consumFuelCoroutine = StartCoroutine(consumeFuel(consumeAmount));
             }
         }
+
+        rotatePlayer(touchRight, touchLeft);
 
         preValOfAllTouch = touchLeft || touchRight;
     }
@@ -119,23 +109,64 @@ public class PlayerMovement : MonoBehaviour {
         remainingFuel = maxFuel;
     }
 
+    void launchControl(bool touchLeft, bool touchRight) {
+        //Ko launch khi giữ nút từ trước
+        if (landed && !preValOfAllTouch) {
+            if (touchLeft || touchRight) rb.velocity = new Vector3(100f, launchForce, 0) * Time.deltaTime;
+        }
+    }
+
+    void movementControl(bool touchLeft, bool touchRight) {
+        if (!landed && remainingFuel > 0) {
+            Vector3 force = new Vector3(horizontalForce, 0, 0);
+            if (touchLeft && !touchRight) rb.AddForce(-force * Time.deltaTime, ForceMode.VelocityChange);
+            if (!touchLeft && touchRight) rb.AddForce(force * Time.deltaTime, ForceMode.VelocityChange);
+
+            if ((touchLeft && !touchRight) || (!touchLeft && touchRight)) {
+                rb.AddForce(Vector3.up * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
+            }
+
+            if (touchLeft && touchRight) rb.AddForce(Vector3.up * 1.5f * pushUpForce * Time.deltaTime, ForceMode.VelocityChange);
+        }
+    }
+
+    void rotatePlayer(bool touchRight, bool touchLeft) {
+        if (touchRight && !touchLeft) {
+            rb.rotation = Quaternion.RotateTowards(rb.rotation, target, 20 * Time.deltaTime);
+        } else if (!touchRight && touchLeft) {
+            rb.rotation = Quaternion.RotateTowards(rb.rotation, Quaternion.Inverse(target), 20 * Time.deltaTime);
+        } else if (touchRight && touchLeft) {
+            rb.rotation = Quaternion.RotateTowards(rb.rotation, Quaternion.Euler(Vector3.zero), 20 * Time.deltaTime);
+        }
+    }
+
+    void checkGround() {
+        preValOfLanded = landed;
+        Collider[] collider = Physics.OverlapBox(groundCheck.position, boxSize, Quaternion.identity, whereCanLand);
+        if (collider.Length > 0) {
+            landed = true;
+        } else {
+            landed = false;
+        }
+    }
+
     private void OnDrawGizmos() {
         Gizmos.DrawCube(groundCheck.position, boxSize);
     }
 
     IEnumerator consumeFuel(float p_consumeAmount) {
         if (remainingFuel > 0) remainingFuel -= p_consumeAmount;
-        yield return WaitForSeconds;
+        yield return WaitForConsumeFuel;
         consumFuelCoroutine = null;
     }
 
     IEnumerator startIdling() {
-        // Khi landed, sau 1 kho?ng th?i gian idling animation s? ch?y
+        // Khi landed, sau 1 khoảng thời gian idling animation sẽ chạy
         yield return WaitForIdling;
         animator.SetBool(idlingHash, true);
 
-        // V� animation ko looping
-        // N�n sau khi ch?y ?c 1 kho?ng th?i gian, s? t?t animation ?i ?? c� th? ch?y l?i
+        // Vì animation ko looping
+        // Nên sau khi chạy đc 1 khoảng thời gian, sẽ tắt animation đi để có thể chạy lại
         yield return WaitForIdling;
         idlingCoroutine = null;
         animator.SetBool(idlingHash, false);

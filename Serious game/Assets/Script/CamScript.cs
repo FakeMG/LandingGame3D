@@ -7,6 +7,7 @@ public class CamScript : MonoBehaviour {
     public GameObject player;
     public PlatformGenerator platformGenerator;
     [SerializeField] float zoomSpeed = 50f;
+    [SerializeField] float distanceToEdgeOfScreen = 5f;
 
     private PlayerMovement playerMovement;
     private PlayerScore playerScore;
@@ -21,14 +22,14 @@ public class CamScript : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update() {
+    void LateUpdate() {
         //Control camera
         //https://stackoverflow.com/questions/59346229/change-camera-distance-of-cinemachine-in-script
         if (componentBase is CinemachineFramingTransposer) {
             if (playerMovement.isLanded()) {
                 // Độ zoom default
                 (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = 0;
-                (componentBase as CinemachineFramingTransposer).m_XDamping = 3;
+                (componentBase as CinemachineFramingTransposer).m_XDamping = 2;
 
                 //Lấy index trong "platformGenerator.platformList" của platform mà người chơi đang đứng lên
                 GameObject currentPlatform = playerScore.getCurrentPlatform();
@@ -48,17 +49,19 @@ public class CamScript : MonoBehaviour {
                         //và platform tiếp theo sẽ ở sát bên phải màn hình thì ngừng zoom
                         float disToEachPlane = plane.GetDistanceToPoint(platformGenerator.platformList[index + 1].position);
 
-                        if (disToEachPlane < 3) {
+                        if (disToEachPlane < distanceToEdgeOfScreen) {
                             zoomIn = false;
                         }
 
-                        if (disToEachPlane < 2) {
+                        if (disToEachPlane < 3) {
                             zoomOut = true;
                         }
                     }
 
-                    if (zoomIn) {
-                        (componentBase as CinemachineFramingTransposer).m_CameraDistance -= zoomSpeed * Time.deltaTime;
+                    if ((componentBase as CinemachineFramingTransposer).m_CameraDistance > 17) {
+                        if (zoomIn) {
+                            (componentBase as CinemachineFramingTransposer).m_CameraDistance -= zoomSpeed * Time.deltaTime;
+                        }
                     }
 
                     if (zoomOut) {
@@ -68,7 +71,6 @@ public class CamScript : MonoBehaviour {
             } else {
                 (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = .7f;
                 (componentBase as CinemachineFramingTransposer).m_XDamping = 5;
-                (componentBase as CinemachineFramingTransposer).m_CameraDistance = 18;
             }
         }
     }
