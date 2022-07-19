@@ -18,39 +18,49 @@ public class PlatformGenerator : MonoBehaviour {
     private Transform lastEndPos;
     private bool nextIsUp;
 
-    // Start is called before the first frame update
     void Start() {
         // toạ độ cần đặt platform tiếp theo
         // "End Position" là 1 gameobject gắn ở cuối mỗi platform
         lastEndPos = platformPrefab.Find("End Position");
 
-        // add platform đầu tiên vào list (platform player đứng lúc mới bắt đầu game)
-        platformList.Add(platformPrefab);
+        CreateFirstPlatform();
 
-        // spawn sẵn platform
+        PreSpawnPlatform();
+    }
+
+    private void CreateFirstPlatform() {
+        // nếu dùng trực tiếp platform có sẵn ở scence thì sẽ ko tìm được nó trong platformList
+        Transform firstPlatform = Instantiate(platformPrefab, Vector3.zero, Quaternion.identity, gameObject.transform);
+        platformList.Add(firstPlatform);
+    }
+
+    private void PreSpawnPlatform() {
         for (int i = 0; i < numOfPreLoadPlatform; i++) {
-            spawnNewPlatform();
+            SpawnSinglePlatform();
         }
     }
 
-    // Update is called once per frame
     void Update() {
-        // Nếu toạ độ x của người chơi tới lastEndPos nhỏ hơn 1 giá trị cho trước thì tạo thêm platform
+        SpawnPlatformWhenPlayerNearEndPosition();
+
+        RemovePlaformWhenExceedSpecificAmount();
+    }
+
+    private void SpawnPlatformWhenPlayerNearEndPosition() {
         if (playerPos != null) {
-            if (Mathf.Abs(lastEndPos.position.x - playerPos.position.x) < preLoadDis) {
+            if (IsPlayerNearEndPosition()) {
                 for (int i = 0; i < numOfPreLoadPlatform; i++) {
-                    spawnNewPlatform();
+                    SpawnSinglePlatform();
                 }
             }
         }
-
-        // Nếu số lượng platform vượt quá số lượng quy định thì xoá bớt đi 2/3
-        if (platformList.Count >= numOfPreLoadPlatform * 3) {
-            platformList.RemoveRange(0, numOfPreLoadPlatform * 2);
-        }
     }
 
-    void spawnNewPlatform() {
+    private bool IsPlayerNearEndPosition() {
+        return Mathf.Abs(lastEndPos.position.x - playerPos.position.x) < preLoadDis;
+    }
+
+    private void SpawnSinglePlatform() {
         float height;
 
         // platform sẽ nằm so le nhau (trên, dưới, trên, dưới,...)
@@ -68,5 +78,11 @@ public class PlatformGenerator : MonoBehaviour {
         Transform newPlatform = Instantiate(platformPrefab, pos, Quaternion.identity, gameObject.transform);
         platformList.Add(newPlatform);
         lastEndPos = newPlatform.Find("End Position");
+    }
+
+    private void RemovePlaformWhenExceedSpecificAmount() {
+        if (platformList.Count >= numOfPreLoadPlatform * 3) {
+            platformList.RemoveRange(0, numOfPreLoadPlatform * 2);
+        }
     }
 }

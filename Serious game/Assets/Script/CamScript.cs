@@ -6,72 +6,102 @@ using UnityEngine;
 public class CamScript : MonoBehaviour {
     public GameObject player;
     public PlatformGenerator platformGenerator;
-    [SerializeField] float zoomSpeed = 50f;
-    [SerializeField] float distanceToEdgeOfScreen = 5f;
+    [SerializeField][Min(0)] private float changingSpeed = 0.2f;
+    [SerializeField][Min(0)] private float zoomSpeed = 50f;
+    [SerializeField][Range(3f, 5f)] private float insideDistance = 5f;
+    [SerializeField][Range(0f, 3f)] private float outsideDistance = 3f;
 
-    private PlayerMovement playerMovement;
+    private MovementController playerMovement;
     private PlayerScore playerScore;
     private CinemachineVirtualCamera virtualCamera;
     private CinemachineComponentBase componentBase;
 
+    private bool zoomIn, zoomOut;
+
     void Awake() {
         virtualCamera = GetComponent<CinemachineVirtualCamera>();
-        playerMovement = player.GetComponent<PlayerMovement>();
+        playerMovement = player.GetComponent<MovementController>();
         playerScore = player.GetComponent<PlayerScore>();
         componentBase = virtualCamera.GetCinemachineComponent(CinemachineCore.Stage.Body);
     }
 
-    // Update is called once per frame
     void LateUpdate() {
-        //Control camera
-        //https://stackoverflow.com/questions/59346229/change-camera-distance-of-cinemachine-in-script
+        //Source: https://stackoverflow.com/questions/59346229/change-camera-distance-of-cinemachine-in-script
+
         if (componentBase is CinemachineFramingTransposer) {
             if (playerMovement.isLanded()) {
-                // Độ zoom default
-                (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = 0;
-                (componentBase as CinemachineFramingTransposer).m_XDamping = 2;
+                FollowPlayer();
 
-                //Lấy index trong "platformGenerator.platformList" của platform mà người chơi đang đứng lên
-                GameObject currentPlatform = playerScore.getCurrentPlatform();
-                int index = 0;
-                if (currentPlatform != null) {
-                    index = platformGenerator.platformList.IndexOf(currentPlatform.transform);
-                }
-
-                if (index >= 0) {
-                    // Kiểm tra xem có zoom in được không
-                    Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-                    bool zoomIn = true;
-                    bool zoomOut = false;
-
-                    foreach (Plane plane in planes) {
-                        //khi nào mà màn hình chỉ còn platform đang đứng và platform tiếp theo
-                        //và platform tiếp theo sẽ ở sát bên phải màn hình thì ngừng zoom
-                        float disToEachPlane = plane.GetDistanceToPoint(platformGenerator.platformList[index + 1].position);
-
-                        if (disToEachPlane < distanceToEdgeOfScreen) {
-                            zoomIn = false;
-                        }
-
-                        if (disToEachPlane < 3) {
-                            zoomOut = true;
-                        }
-                    }
-
-                    if ((componentBase as CinemachineFramingTransposer).m_CameraDistance > 17) {
-                        if (zoomIn) {
-                            (componentBase as CinemachineFramingTransposer).m_CameraDistance -= zoomSpeed * Time.deltaTime;
-                        }
-                    }
-
-                    if (zoomOut) {
-                        (componentBase as CinemachineFramingTransposer).m_CameraDistance += zoomSpeed * Time.deltaTime;
-                    }
-                }
+                ControlZoomToFitPlatformOnScreen();
             } else {
-                (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = .7f;
-                (componentBase as CinemachineFramingTransposer).m_XDamping = 5;
+                StopFollowingPlayer();
             }
+        }
+    }
+
+    private void FollowPlayer() {
+        (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth = 0;
+        (componentBase as CinemachineFramingTransposer).m_XDamping = 2;
+    }
+
+    private void ControlZoomToFitPlatformOnScreen() {
+        int index = GetIndexOfCurrentStandingPlatform();
+
+        if (index >= 0) {
+            SetZoomCondition(index);
+
+            if (zoomIn) {
+                (componentBase as CinemachineFramingTransposer).m_CameraDistance -= zoomSpeed * Time.deltaTime;
+            }
+
+            if (zoomOut) {
+                (componentBase as CinemachineFramingTransposer).m_CameraDistance += zoomSpeed * Time.deltaTime;
+            }
+        }
+    }
+
+    private int GetIndexOfCurrentStandingPlatform() {
+        GameObject currentPlatform = playerScore.GetCurrentPlatform();
+        int index = -1;
+        if (currentPlatform != null) {
+            index = platformGenerator.platformList.IndexOf(currentPlatform.transform);
+        }
+
+        return index;
+    }
+
+    private void SetZoomCondition(int index) {
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+        zoomIn = true;
+        zoomOut = false;
+
+        /* index of frustum plane
+         *      3
+         * 0   5,4    1
+         *      2
+         * inside is positive
+         */
+        for (int i = 1; i <= 3; i++) {
+            float disToEachPlane = planes[i].GetDistanceToPoint(platformGenerator.platformList[index + 1].position);
+
+            // zoomIn phụ thuộc vào khoảng cách giữa platform tới cả 3 cạnh
+            if (disToEachPlane < insideDistance) {
+                zoomIn = false;
+            }
+
+            // zoomOut phụ thuộc vào khoảng cách giữa platform tới cạnh gần nhất
+            if (disToEachPlane < outsideDistance) {
+                zoomOut = true;
+            }
+        }
+    }
+
+    private void StopFollowingPlayer() {
+        if ((componentBase as CinemachineFramingTransposer).m_DeadZoneWidth <= 0.7f) {
+            (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth += changingSpeed * Time.deltaTime;
+        }
+        if ((componentBase as CinemachineFramingTransposer).m_XDamping <= 5) {
+            (componentBase as CinemachineFramingTransposer).m_XDamping += changingSpeed * Time.deltaTime;
         }
     }
 }

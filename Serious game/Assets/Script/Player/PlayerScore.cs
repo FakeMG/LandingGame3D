@@ -7,30 +7,58 @@ public class PlayerScore : MonoBehaviour {
     [SerializeField] private int score;
 
     private static int prePlatformID;
-    private int skipOverMultiply = 2;
+    private static int currentPlatformID;
     private GameObject currentPlatform;
-
+    private int skipOverMultiplier = 2;
 
     private void OnCollisionEnter(Collision collision) {
-        currentPlatform = collision.gameObject;
-        PlatformBehaviour temp = collision.transform.GetComponent<PlatformBehaviour>();
-        if (temp && gameObject.activeInHierarchy) {
-            if (temp.id - prePlatformID == 1) {
-                prePlatformID = temp.id;
-                score++;
-                skipOverMultiply = 2;
-            }
-            if (temp.id - prePlatformID > 1) {
-                score += (temp.id - prePlatformID) * skipOverMultiply;
-                prePlatformID = temp.id;
-                skipOverMultiply += 2;
-            }
+        if (IsAPlatform(collision)) {
+            GetPlatformIDAndGameObject(collision);
 
-            textScore.text = score.ToString();
+            UpdateScore();
+
+            UpdateScoreWhenSkipOver();
+
+            UpdatePrePlatformID();
+
+            UpdateScoreUI();
         }
     }
 
-    public GameObject getCurrentPlatform() {
+    private bool IsAPlatform(Collision collision) {
+        PlatformBehaviour platform = collision.transform.GetComponent<PlatformBehaviour>();
+        return platform;
+    }
+
+    private void GetPlatformIDAndGameObject(Collision collision) {
+        PlatformBehaviour platform = collision.transform.GetComponent<PlatformBehaviour>();
+        currentPlatform = collision.gameObject;
+        currentPlatformID = platform.GetID();
+    }
+
+    private void UpdateScore() {
+        if (currentPlatformID - prePlatformID == 1) {
+            score++;
+            skipOverMultiplier = 2; //reset
+        }
+    }
+
+    private void UpdateScoreWhenSkipOver() {
+        if (currentPlatformID - prePlatformID > 1) {
+            score += (currentPlatformID - prePlatformID) * skipOverMultiplier;
+            skipOverMultiplier += 2;
+        }
+    }
+
+    private void UpdatePrePlatformID() {
+        prePlatformID = currentPlatformID;
+    }
+
+    private void UpdateScoreUI() {
+        textScore.text = score.ToString();
+    }
+
+    public GameObject GetCurrentPlatform() {
         return currentPlatform;
     }
 }

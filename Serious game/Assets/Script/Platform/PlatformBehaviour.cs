@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class PlatformBehaviour : MonoBehaviour {
     [SerializeField] private float moveSpeed;
-    [SerializeField] public int id;
+    [SerializeField] private int id;
 
     private static int platformIDGenerator;
     private Animator animator;
@@ -25,26 +25,33 @@ public class PlatformBehaviour : MonoBehaviour {
     void OnCollisionEnter(Collision collision) {
         animator.SetBool("PushDown", true);
 
-        // Stop player
+        StopPlayerWhenLanded(collision);
+    }
+
+    private void StopPlayerWhenLanded(Collision collision) {
         if (collision.transform.CompareTag("Player")) {
             playerRB = collision.gameObject.GetComponent<Rigidbody>();
-            if (playerRB.GetComponent<PlayerMovement>().isLanded()) {
+            if (playerRB.GetComponent<MovementController>().isLanded()) {
                 playerRB.velocity = Vector3.zero;
             }
         }
     }
 
-    void OnCollisionExit(Collision collision) {
+    void OnCollisionStay(Collision collision) {
+        CenterPlayerWhenLanded();
     }
 
-    void OnCollisionStay(Collision collision) {
-        // Center player
+    private void CenterPlayerWhenLanded() {
         if (playerRB != null) {
-            if (playerRB.GetComponent<PlayerMovement>().isLanded()) {
+            if (playerRB.GetComponent<MovementController>().isLanded()) {
                 Vector3 targetPos = new Vector3(gameObject.transform.position.x, playerRB.position.y, playerRB.position.z);
                 playerRB.position = Vector3.MoveTowards(playerRB.position, targetPos, moveSpeed * Time.deltaTime);
                 playerRB.rotation = Quaternion.RotateTowards(playerRB.rotation, Quaternion.Euler(Vector3.zero), moveSpeed * Time.deltaTime);
             }
         }
+    }
+
+    public int GetID() {
+        return id;
     }
 }
