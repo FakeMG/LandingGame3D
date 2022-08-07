@@ -6,7 +6,7 @@ using UnityEngine;
 public class CamScript : MonoBehaviour {
     public GameObject player;
     public PlatformGenerator platformGenerator;
-    [SerializeField][Min(0)] private float changingSpeed = 0.2f;
+    [SerializeField][Min(0)] private float followToNotFollowTransitionSpeed = 0.2f;
     [SerializeField][Min(0)] private float zoomSpeed = 50f;
     [SerializeField][Range(3f, 5f)] private float insideDistance = 5f;
     [SerializeField][Range(0f, 3f)] private float outsideDistance = 3f;
@@ -98,10 +98,10 @@ public class CamScript : MonoBehaviour {
 
     private void StopFollowingPlayer() {
         if ((componentBase as CinemachineFramingTransposer).m_DeadZoneWidth <= 0.7f) {
-            (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth += changingSpeed * Time.deltaTime;
+            (componentBase as CinemachineFramingTransposer).m_DeadZoneWidth += followToNotFollowTransitionSpeed * Time.deltaTime;
         }
         if ((componentBase as CinemachineFramingTransposer).m_XDamping <= 5) {
-            (componentBase as CinemachineFramingTransposer).m_XDamping += changingSpeed * Time.deltaTime;
+            (componentBase as CinemachineFramingTransposer).m_XDamping += followToNotFollowTransitionSpeed * Time.deltaTime;
         }
     }
 }

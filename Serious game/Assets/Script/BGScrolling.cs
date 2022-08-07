@@ -12,10 +12,8 @@ public class BGScrolling : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        transform.position = new Vector3(transform.position.x, transform.position.y, 30);
 
-        MoveAlongXAxis();
-        AddParralaxEffectOnYAxis();
+        AddParralaxEffectOnAxis(true, false);
     }
 
     private void MoveAlongXAxis() {
@@ -24,9 +22,12 @@ public class BGScrolling : MonoBehaviour {
         material.mainTextureOffset = offset;
     }
 
-    private void AddParralaxEffectOnYAxis() {
+    private void AddParralaxEffectOnAxis(bool x, bool y) {
         Vector2 offset = material.mainTextureOffset;
-        offset.y = ((transform.position.y / transform.localScale.y) * material.mainTextureScale.y) / parralax;
+        if (x)
+            offset.x = ((transform.position.x / transform.localScale.x) * material.mainTextureScale.x) / parralax;
+        if (y)
+            offset.y = ((transform.position.y / transform.localScale.y) * material.mainTextureScale.y) / parralax;
         material.mainTextureOffset = offset;
     }
 }
